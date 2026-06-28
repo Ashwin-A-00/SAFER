@@ -1,0 +1,62 @@
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix ex:  <http://example.org/credit#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:ImmutabilityShape a sh:NodeShape ;
+    sh:targetClass ex:CreditApplicant ;
+
+    sh:sparql [
+        sh:message "Immutability violation: age changed in counterfactual." ;
+        sh:select """
+            PREFIX ex: <http://example.org/credit#>
+            SELECT $this ?cfAge ?origAge
+            WHERE {
+                $this ex:isCounterfactualOf ?original .
+                $this ex:age ?cfAge .
+                ?original ex:age ?origAge .
+                FILTER (?cfAge != ?origAge)
+            }
+        """ ;
+    ] ;
+
+    sh:sparql [
+        sh:message "Immutability violation: personal_status changed." ;
+        sh:select """
+            PREFIX ex: <http://example.org/credit#>
+            SELECT $this ?cfVal ?origVal
+            WHERE {
+                $this ex:isCounterfactualOf ?original .
+                $this ex:personalStatus ?cfVal .
+                ?original ex:personalStatus ?origVal .
+                FILTER (?cfVal != ?origVal)
+            }
+        """ ;
+    ] ;
+
+    sh:sparql [
+        sh:message "Immutability violation: num_dependents changed." ;
+        sh:select """
+            PREFIX ex: <http://example.org/credit#>
+            SELECT $this ?cfVal ?origVal
+            WHERE {
+                $this ex:isCounterfactualOf ?original .
+                $this ex:numberOfDependents ?cfVal .
+                ?original ex:numberOfDependents ?origVal .
+                FILTER (?cfVal != ?origVal)
+            }
+        """ ;
+    ] ;
+
+    sh:sparql [
+        sh:message "Immutability violation: foreign_worker changed." ;
+        sh:select """
+            PREFIX ex: <http://example.org/credit#>
+            SELECT $this ?cfVal ?origVal
+            WHERE {
+                $this ex:isCounterfactualOf ?original .
+                $this ex:foreignWorker ?cfVal .
+                ?original ex:foreignWorker ?origVal .
+                FILTER (?cfVal != ?origVal)
+            }
+        """ ;
+    ] .

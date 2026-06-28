@@ -1,0 +1,170 @@
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:     <http://example.org/credit#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+#  COHERENCE CONSTRAINTS — shapes_coherence.ttl
+#  Version: 1.0
+#
+#  Conditional proportional constraints between features.
+#  Goes beyond binary immutability to semantic coherence.
+#  All constraints use SHACL-SPARQL for cross-instance comparison.
+#
+#  CONSTRAINTS:
+#  1. Age never decreases
+#  2. Savings + checking incoherence
+#  3. Employment jump limit (max 2 tiers)
+#  4. Credit history jump limit (max 2 tiers)
+#  5. Employment tier drives minimum age increase
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+ex:CoherenceShape a sh:NodeShape ;
+    sh:targetClass ex:CreditApplicant ;
+
+# ───────────────────────────────────────────────────────────────────────────────
+# CONSTRAINT 1 — Age never decreases
+# Age can only stay the same or increase — never go backwards
+# This is a soft version of immutability — age can change but only forward
+# ───────────────────────────────────────────────────────────────────────────────
+
+    sh:sparql [
+        sh:name        "ageNeverDecreases" ;
+        sh:description "Age can only increase or stay the same. Never decrease." ;
+        sh:message     "Coherence violation: age decreased in counterfactual. Age can only increase." ;
+        sh:severity    sh:Violation ;
+        sh:prefixes    ex: ;
+        sh:select """
+            PREFIX ex: <http://example.org/credit#>
+            SELECT $this ?cfAge ?origAge
+            WHERE {
+                $this ex:isCounterfactualOf ?original .
+                $this ex:age ?cfAge .
+                ?original ex:age ?origAge .
+                FILTER (xsd:integer(?cfAge) < xsd:integer(?origAge))
+            }
+        """ ;
+    ] ;
+
+# ───────────────────────────────────────────────────────────────────────────────
+# CONSTRAINT 2 — Savings and checking account incoherence
+# Cannot have maximum savings (A64 >= 1000DM) with overdrawn account (A11)
+# Someone with 1000+ DM savings would not have an overdrawn checking account
+# ───────────────────────────────────────────────────────────────────────────────
+
+    sh:sparql [
+        sh:name        "savingsCheckingCoherence" ;
+        sh:description "High savings (A64) and overdrawn account (A11) are incoherent." ;
+        sh:message     "Coherence violation: CF has maximum savings (A64 >= 1000DM) but overdrawn checking account (A11). This is financially incoherent." ;
+        sh:severity    sh:Violation ;
+        sh:prefixes    ex: ;
+        sh:select """
+            PREFIX ex: <http://example.org/credit#>
+            SELECT $this ?cfSavings ?cfChecking
+            WHERE {
+                $this ex:isCounterfactualOf ?original .
+                $this ex:savingsStatus ?cfSavings .
+                $this ex:checkingAccountStatus ?cfChecking .
+                FILTER (?cfSavings = "A64" && ?cfChecking = "A11")
+            }
+        """ ;
+    ] ;
+
+# ───────────────────────────────────────────────────────────────────────────────
+# CONSTRAINT 3 — Employment jump limit
+# Cannot jump more than 2 tiers in one CF
+# Employment tiers: A71=0, A72=1, A73=2, A74=3, A75=4
+# A jump of 3+ tiers (e.g. A71 to A74) is not realistic in one step
+# ───────────────────────────────────────────────────────────────────────────────
+
+    sh:sparql [
+        sh:name        "employmentJumpLimit" ;
+        sh:description "Employment cannot jump more than 2 tiers in one CF." ;
+        sh:message     "Coherence violation: employment jumped more than 2 tiers. Not realistic in one step." ;
+        sh:severity    sh:Warning ;
+        sh:prefixes    ex: ;
+        sh:select """
+            PREFIX ex: <http://example.org/credit#>
+            SELECT $this ?cfEmp ?origEmp
+            WHERE {
+                $this ex:isCounterfactualOf ?original .
+                $this ex:employmentSince ?cfEmp .
+                ?original ex:employmentSince ?origEmp .
+                FILTER (
+                    (?origEmp = "A71" && (?cfEmp = "A74" || ?cfEmp = "A75")) ||
+                    (?origEmp = "A72" && ?cfEmp = "A75")
+                )
+            }
+        """ ;
+    ] ;
+
+# ───────────────────────────────────────────────────────────────────────────────
+# CONSTRAINT 4 — Credit history jump limit
+# Cannot jump more than 2 tiers in one CF
+# Credit history tiers: A34=0, A33=1, A32=2, A31=3, A30=4
+# A jump of 3+ tiers (e.g. A34 to A31) is not realistic in one step
+# ───────────────────────────────────────────────────────────────────────────────
+
+    sh:sparql [
+        sh:name        "creditHistoryJumpLimit" ;
+        sh:description "Credit history cannot improve more than 2 tiers in one CF." ;
+        sh:message     "Coherence violation: credit history improved more than 2 tiers. Not realistic in one step." ;
+        sh:severity    sh:Warning ;
+        sh:prefixes    ex: ;
+        sh:select """
+            PREFIX ex: <http://example.org/credit#>
+            SELECT $this ?cfHist ?origHist
+            WHERE {
+                $this ex:isCounterfactualOf ?original .
+                $this ex:creditHistory ?cfHist .
+                ?original ex:creditHistory ?origHist .
+                FILTER (
+                    (?origHist = "A34" && (?cfHist = "A31" || ?cfHist = "A30")) ||
+                    (?origHist = "A33" && ?cfHist = "A30")
+                )
+            }
+        """ ;
+    ] ;
+
+# ───────────────────────────────────────────────────────────────────────────────
+# CONSTRAINT 5 — Employment tier drives minimum age increase
+# Each employment tier jump requires minimum years to have passed
+# Tier jump of 1 = minimum 1 year, jump of 2 = minimum 4 years
+# Only applies if age is allowed to change (not hard immutable)
+# Currently noted as Warning since age is immutable in our project
+# ───────────────────────────────────────────────────────────────────────────────
+
+    sh:sparql [
+        sh:name        "employmentAgeProportion" ;
+        sh:description "Employment tier increase must be reflected in proportional age increase." ;
+        sh:message     "Coherence violation: employment improved significantly but age did not increase proportionally." ;
+        sh:severity    sh:Warning ;
+        sh:prefixes    ex: ;
+        sh:select """
+            PREFIX ex: <http://example.org/credit#>
+            SELECT $this ?cfEmp ?origEmp ?cfAge ?origAge
+            WHERE {
+                $this ex:isCounterfactualOf ?original .
+                $this ex:employmentSince ?cfEmp .
+                ?original ex:employmentSince ?origEmp .
+                $this ex:age ?cfAge .
+                ?original ex:age ?origAge .
+                FILTER (
+                    (
+                        ?origEmp = "A72" && ?cfEmp = "A74" &&
+                        xsd:integer(?cfAge) < xsd:integer(?origAge) + 4
+                    ) ||
+                    (
+                        ?origEmp = "A72" && ?cfEmp = "A75" &&
+                        xsd:integer(?cfAge) < xsd:integer(?origAge) + 6
+                    ) ||
+                    (
+                        ?origEmp = "A73" && ?cfEmp = "A75" &&
+                        xsd:integer(?cfAge) < xsd:integer(?origAge) + 3
+                    )
+                )
+            }
+        """ ;
+    ] .

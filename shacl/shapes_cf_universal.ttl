@@ -1,0 +1,245 @@
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex:     <http://example.org/credit#> .
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+#  UNIVERSAL CF EXPLANATION METADATA SCHEMA
+#  Version: 1.0
+#
+#  A modular SHACL validation framework for counterfactual explanations.
+#  Works with any CF method (DiCE, MCCE, CARLA, Wachter etc),
+#  any dataset (German Credit, Adult, COMPAS, HELOC etc),
+#  and any ML model (RandomForest, XGBoost, NeuralNetwork etc).
+#
+#  THREE MODULES:
+#
+#  MODULE 1 — ex:CFCoreShape
+#  Mandatory. Every CF explanation must pass this.
+#  Checks provenance, validity, and basic completeness.
+#
+#  MODULE 2 — ex:CFQualityShape
+#  Recommended. Enables method comparison.
+#  Checks quality metrics — sparsity, proximity, generation time.
+#  Uses sh:Warning severity — CF passes even without these,
+#  but warnings are reported so you know what is missing.
+#
+#  MODULE 3 — ex:CFActionabilityShape
+#  Recommended. Checks domain constraint compliance.
+#  Checks immutability and direction constraint violations.
+#  Uses sh:Violation severity — CF fails if violations > 0.
+#
+#  HOW TO USE:
+#  Load this file as your shapes graph in pySHACL.
+#  All three modules run automatically against any node
+#  typed as ex:CounterfactualExplanation.
+#
+#  TO USE ONLY ONE MODULE:
+#  Copy just that NodeShape block into your own shapes file.
+#  Each module is fully independent.
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+# ───────────────────────────────────────────────────────────────────────────────
+# MODULE 1 — CORE (MANDATORY)
+# Every CF explanation must pass all constraints in this module.
+# A CF that fails any constraint here is not a valid explanation.
+# ───────────────────────────────────────────────────────────────────────────────
+
+ex:CFCoreShape a sh:NodeShape ;
+    sh:targetClass ex:CounterfactualExplanation ;
+    sh:severity sh:Violation ;
+    rdfs:label "CF Core Shape" ;
+    rdfs:comment "Mandatory constraints for any counterfactual explanation." ;
+
+    # ── Provenance ─────────────────────────────────────────────────────────────
+
+    # which method generated this CF
+    sh:property [
+        sh:path        ex:generatedBy ;
+        sh:minCount    1 ;
+        sh:maxCount    1 ;
+        sh:name        "generatedBy" ;
+        sh:description "The CF method that generated this explanation. e.g. DiCE, MCCE, CARLA." ;
+        sh:message     "CF must specify exactly one generation method." ;
+        sh:order       1 ;
+    ] ;
+
+    # which original instance this CF explains
+    sh:property [
+        sh:path        ex:explainedInstance ;
+        sh:minCount    1 ;
+        sh:maxCount    1 ;
+        sh:name        "explainedInstance" ;
+        sh:description "The original rejected instance this CF was generated for." ;
+        sh:message     "CF must link to exactly one original instance." ;
+        sh:order       2 ;
+    ] ;
+
+    # which dataset was used
+    sh:property [
+        sh:path        ex:datasetName ;
+        sh:datatype    xsd:string ;
+        sh:minCount    1 ;
+        sh:maxCount    1 ;
+        sh:name        "datasetName" ;
+        sh:description "Name of the dataset. e.g. GermanCredit, Adult, COMPAS, HELOC." ;
+        sh:message     "CF must specify which dataset it came from." ;
+        sh:order       3 ;
+    ] ;
+
+    # which model type was explained
+    sh:property [
+        sh:path        ex:modelType ;
+        sh:datatype    xsd:string ;
+        sh:minCount    1 ;
+        sh:maxCount    1 ;
+        sh:name        "modelType" ;
+        sh:description "Type of ML model. e.g. RandomForest, XGBoost, NeuralNetwork." ;
+        sh:message     "CF must specify which model type was explained." ;
+        sh:order       4 ;
+    ] ;
+
+    # ── Validity ───────────────────────────────────────────────────────────────
+
+    # approval probability must exist
+    sh:property [
+        sh:path         ex:approvalProbability ;
+        sh:datatype     xsd:decimal ;
+        sh:minCount     1 ;
+        sh:maxCount     1 ;
+        sh:minInclusive 0.0 ;
+        sh:maxInclusive 1.0 ;
+        sh:name         "approvalProbability" ;
+        sh:description  "Model predicted probability for desired class. Must be between 0 and 1." ;
+        sh:message      "CF must have an approval probability between 0 and 1." ;
+        sh:order        5 ;
+    ] ;
+
+    # probability must exceed 0.5 — CF must genuinely flip prediction
+    sh:property [
+        sh:path         ex:approvalProbability ;
+        sh:minExclusive 0.5 ;
+        sh:name         "approvalProbabilityThreshold" ;
+        sh:description  "CF must cross the decision boundary with meaningful confidence." ;
+        sh:message      "CF approval probability must exceed 0.5 to be a valid counterfactual." ;
+        sh:order        6 ;
+    ] ;
+
+    # ── Ordering ───────────────────────────────────────────────────────────────
+
+    # CF index in the generated set
+    sh:property [
+        sh:path         ex:cfIndex ;
+        sh:datatype     xsd:integer ;
+        sh:minCount     1 ;
+        sh:maxCount     1 ;
+        sh:minInclusive 1 ;
+        sh:name         "cfIndex" ;
+        sh:description  "Position of this CF in the generated set. Starts at 1." ;
+        sh:message      "CF must have a positive integer index." ;
+        sh:order        7 ;
+    ] .
+
+
+# ───────────────────────────────────────────────────────────────────────────────
+# MODULE 2 — QUALITY METRICS (RECOMMENDED)
+# Enables comparison between CF methods.
+# Uses sh:Warning — CF passes without these but warnings are reported.
+# Compute these metrics and store them for richer evaluation.
+# ───────────────────────────────────────────────────────────────────────────────
+
+ex:CFQualityShape a sh:NodeShape ;
+    sh:targetClass ex:CounterfactualExplanation ;
+    sh:severity sh:Warning ;
+    rdfs:label "CF Quality Shape" ;
+    rdfs:comment "Recommended quality metrics for CF comparison. Warnings only." ;
+
+    # sparsity — how many features changed
+    # lower is better — fewer changes = more actionable
+    sh:property [
+        sh:path         ex:sparsityScore ;
+        sh:datatype     xsd:integer ;
+        sh:minInclusive 0 ;
+        sh:name         "sparsityScore" ;
+        sh:description  "Number of features changed. Lower is better. 0 = no change (invalid CF)." ;
+        sh:message      "Sparsity score recommended. Compute as count of changed features." ;
+        sh:order        1 ;
+    ] ;
+
+    # sparsity must be at least 1 — a CF that changes nothing is not a CF
+    sh:property [
+        sh:path         ex:sparsityScore ;
+        sh:minExclusive 0 ;
+        sh:name         "sparsityScoreMinimum" ;
+        sh:description  "A CF must change at least one feature." ;
+        sh:message      "Sparsity score must be greater than 0. A CF must change at least one feature." ;
+        sh:order        2 ;
+    ] ;
+
+    # proximity — distance from original instance
+    # lower is better — smaller changes = more realistic
+    sh:property [
+        sh:path         ex:proximityScore ;
+        sh:datatype     xsd:decimal ;
+        sh:minInclusive 0.0 ;
+        sh:name         "proximityScore" ;
+        sh:description  "L1 or L2 distance from original instance. Lower is better." ;
+        sh:message      "Proximity score recommended. Compute as L1 distance on numeric features." ;
+        sh:order        3 ;
+    ] ;
+
+    # generation time
+    sh:property [
+        sh:path         ex:generationTime ;
+        sh:datatype     xsd:decimal ;
+        sh:minInclusive 0.0 ;
+        sh:name         "generationTime" ;
+        sh:description  "Time in seconds taken to generate this CF." ;
+        sh:message      "Generation time recommended for benchmarking." ;
+        sh:order        4 ;
+    ] .
+
+
+# ───────────────────────────────────────────────────────────────────────────────
+# MODULE 3 — ACTIONABILITY (RECOMMENDED)
+# Checks that domain constraints were respected.
+# Uses sh:Violation — CF fails if immutable or direction violations > 0.
+# These are hard constraints — a CF that violates them is not actionable.
+# ───────────────────────────────────────────────────────────────────────────────
+
+ex:CFActionabilityShape a sh:NodeShape ;
+    sh:targetClass ex:CounterfactualExplanation ;
+    sh:severity sh:Violation ;
+    rdfs:label "CF Actionability Shape" ;
+    rdfs:comment "Actionability constraints. CFs that violate these are not valid recourse." ;
+
+    # immutable violations must be zero
+    # any CF that changed an immutable feature is not actionable
+    sh:property [
+        sh:path         ex:immutableViolations ;
+        sh:datatype     xsd:integer ;
+        sh:maxInclusive 0 ;
+        sh:minInclusive 0 ;
+        sh:name         "immutableViolations" ;
+        sh:description  "Number of immutable features changed. Must be 0 for valid recourse." ;
+        sh:message      "CF changed one or more immutable features. This CF is not valid recourse." ;
+        sh:order        1 ;
+    ] ;
+
+    # direction violations must be zero
+    # any CF that changed a feature in the wrong direction is not actionable
+    sh:property [
+        sh:path         ex:directionViolations ;
+        sh:datatype     xsd:integer ;
+        sh:maxInclusive 0 ;
+        sh:minInclusive 0 ;
+        sh:name         "directionViolations" ;
+        sh:description  "Number of features changed in wrong direction. Must be 0 for valid recourse." ;
+        sh:message      "CF violated one or more feature direction constraints. This CF is not valid recourse." ;
+        sh:order        2 ;
+    ] .

@@ -1,0 +1,235 @@
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:     <http://example.org/credit#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+
+# ── CreditApplicant shape ─────────────────────────────────────────────────────
+
+ex:CreditApplicantShape a sh:NodeShape ;
+    sh:targetClass ex:CreditApplicant ;
+
+    # duration: 4–72 months, mutable, decrease only
+    sh:property [
+        sh:path ex:duration ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 4 ;
+        sh:maxInclusive 72 ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "duration" ;
+        sh:description "Loan duration in months. CF direction: decrease." ;
+    ] ;
+
+    # credit amount: 250–18424 DM, mutable, decrease only
+    sh:property [
+        sh:path ex:creditAmount ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 250 ;
+        sh:maxInclusive 18424 ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "creditAmount" ;
+        sh:description "Credit amount in DM. CF direction: decrease." ;
+    ] ;
+
+    # installment rate: 1–4, mutable, decrease only
+    sh:property [
+        sh:path ex:installmentRate ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:maxInclusive 4 ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "installmentRate" ;
+        sh:description "Installment rate 1-4. CF direction: decrease." ;
+    ] ;
+
+    # residence since: 1–4, mutable, increase only
+    sh:property [
+        sh:path ex:residenceSince ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:maxInclusive 4 ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "residenceSince" ;
+        sh:description "Years at residence 1-4. CF direction: increase." ;
+    ] ;
+
+    # age: 19–75, IMMUTABLE
+    sh:property [
+        sh:path ex:age ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 19 ;
+        sh:maxInclusive 75 ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "age" ;
+        sh:description "Age in years. IMMUTABLE - must not change in CF." ;
+    ] ;
+
+    # existing credits: 1–4, mutable, decrease only
+    sh:property [
+        sh:path ex:existingCredits ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:maxInclusive 4 ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "existingCredits" ;
+        sh:description "Number of existing credits. CF direction: decrease." ;
+    ] ;
+
+    # number of dependents: 1–2, IMMUTABLE
+    sh:property [
+        sh:path ex:numberOfDependents ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:maxInclusive 2 ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "numberOfDependents" ;
+        sh:description "Number of dependents. IMMUTABLE." ;
+    ] ;
+
+    # checking account status: categorical, mutable
+    sh:property [
+        sh:path ex:checkingAccountStatus ;
+        sh:in ( "A11" "A12" "A13" "A14" ) ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "checkingAccountStatus" ;
+        sh:description "Checking account status. CF direction: both." ;
+    ] ;
+
+    # credit history: categorical, mutable
+    sh:property [
+        sh:path ex:creditHistory ;
+        sh:in ( "A30" "A31" "A32" "A33" "A34" ) ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "creditHistory" ;
+        sh:description "Credit history code. CF direction: increase." ;
+    ] ;
+
+    # loan purpose: categorical, mutable
+    sh:property [
+        sh:path ex:loanPurpose ;
+        sh:in ( "A40" "A41" "A42" "A43" "A44" "A45" "A46" "A48" "A49" "A410" ) ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "loanPurpose" ;
+        sh:description "Purpose of loan. CF direction: both." ;
+    ] ;
+
+    # savings status: categorical, mutable
+    sh:property [
+        sh:path ex:savingsStatus ;
+        sh:in ( "A61" "A62" "A63" "A64" "A65" ) ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "savingsStatus" ;
+        sh:description "Savings account status. CF direction: increase." ;
+    ] ;
+
+    # employment since: categorical, mutable
+    sh:property [
+        sh:path ex:employmentSince ;
+        sh:in ( "A71" "A72" "A73" "A74" "A75" ) ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "employmentSince" ;
+        sh:description "Employment duration. CF direction: increase." ;
+    ] ;
+
+    # personal status: categorical, IMMUTABLE
+    sh:property [
+        sh:path ex:personalStatus ;
+        sh:in ( "A91" "A92" "A93" "A94" "A95" ) ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "personalStatus" ;
+        sh:description "Personal status and sex. IMMUTABLE." ;
+    ] ;
+
+    # other debtors: categorical, mutable
+    sh:property [
+        sh:path ex:otherDebtors ;
+        sh:in ( "A101" "A102" "A103" ) ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "otherDebtors" ;
+        sh:description "Other debtors/guarantors. CF direction: both." ;
+    ] ;
+
+    # property type: categorical, mutable
+    sh:property [
+        sh:path ex:propertyType ;
+        sh:in ( "A121" "A122" "A123" "A124" ) ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "propertyType" ;
+        sh:description "Property type. CF direction: increase." ;
+    ] ;
+
+    # other installment plans: categorical, mutable
+    sh:property [
+        sh:path ex:otherInstallmentPlans ;
+        sh:in ( "A141" "A142" "A143" ) ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "otherInstallmentPlans" ;
+        sh:description "Other installment plans. CF direction: both." ;
+    ] ;
+
+    # housing status: categorical, mutable
+    sh:property [
+        sh:path ex:housingStatus ;
+        sh:in ( "A151" "A152" "A153" ) ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "housingStatus" ;
+        sh:description "Housing situation. CF direction: both." ;
+    ] ;
+
+    # job type: categorical, mutable
+    sh:property [
+        sh:path ex:jobType ;
+        sh:in ( "A171" "A172" "A173" "A174" ) ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "jobType" ;
+        sh:description "Job category. CF direction: increase." ;
+    ] ;
+
+    # telephone: categorical, mutable
+    sh:property [
+        sh:path ex:telephone ;
+        sh:in ( "A191" "A192" ) ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "telephone" ;
+        sh:description "Telephone registered. CF direction: both." ;
+    ] ;
+
+    # foreign worker: categorical, IMMUTABLE
+    sh:property [
+        sh:path ex:foreignWorker ;
+        sh:in ( "A201" "A202" ) ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "foreignWorker" ;
+        sh:description "Foreign worker status. IMMUTABLE." ;
+    ] ;
+
+    # credit risk: target variable
+    sh:property [
+        sh:path ex:creditRisk ;
+        sh:datatype xsd:integer ;
+        sh:in ( 1 2 ) ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:name "creditRisk" ;
+        sh:description "Credit risk. 1:good, 2:bad." ;
+    ] .
