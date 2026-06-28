@@ -1,0 +1,21 @@
+feature,mutable,direction,note
+checking_status,True,both,can open/close accounts
+duration,True,decrease,shorter loan = less risk
+credit_history,True,increase,improves over time
+purpose,True,both,reason for loan
+credit_amount,True,decrease,borrow less
+savings_status,True,increase,can save more
+employment,True,increase,employment tenure grows
+installment_rate,True,decrease,lower rate is better
+personal_status,False,none,immutable demographic
+other_debtors,True,both,can add/remove guarantor
+residence_since,True,increase,grows over time
+property,True,increase,can acquire property
+age,False,increase,"immutable, only increases"
+other_installment_plans,True,both,can change plans
+housing,True,both,can change housing
+existing_credits,True,decrease,pay off other credits
+job,True,increase,career can improve
+num_dependents,False,none,treat as fixed
+telephone,True,both,minor feature
+foreign_worker,False,none,immutable demographic

@@ -1,0 +1,21 @@
+feature,type,min,max,unique_vals
+checking_status,categorical,,,"['A11', 'A12', 'A14', 'A13']"
+duration,numeric,4.0,72.0,
+credit_history,categorical,,,"['A34', 'A32', 'A33', 'A30', 'A31']"
+purpose,categorical,,,"['A43', 'A46', 'A42', 'A40', 'A41', 'A49', 'A44', 'A45', 'A410', 'A48']"
+credit_amount,numeric,250.0,18424.0,
+savings_status,categorical,,,"['A65', 'A61', 'A63', 'A64', 'A62']"
+employment,categorical,,,"['A75', 'A73', 'A74', 'A71', 'A72']"
+installment_rate,numeric,1.0,4.0,
+personal_status,categorical,,,"['A93', 'A92', 'A91', 'A94']"
+other_debtors,categorical,,,"['A101', 'A103', 'A102']"
+residence_since,numeric,1.0,4.0,
+property,categorical,,,"['A121', 'A122', 'A124', 'A123']"
+age,numeric,19.0,75.0,
+other_installment_plans,categorical,,,"['A143', 'A141', 'A142']"
+housing,categorical,,,"['A152', 'A153', 'A151']"
+existing_credits,numeric,1.0,4.0,
+job,categorical,,,"['A173', 'A172', 'A174', 'A171']"
+num_dependents,numeric,1.0,2.0,
+telephone,categorical,,,"['A192', 'A191']"
+foreign_worker,categorical,,,"['A201', 'A202']"
